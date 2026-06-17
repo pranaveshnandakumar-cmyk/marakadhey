@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Marakadhey",
-  "version": "1.2",
+  "version": "2.0",
   "description": " Save your important webpages with reminders so that you never miss a deadline.",
   "minimum_chrome_version": "114",
   "permissions": [
