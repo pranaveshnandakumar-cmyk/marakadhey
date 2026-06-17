@@ -7,6 +7,14 @@ Marakadhey is a Chrome Extension that helps users save important webpages and re
 Whether it's an internship application, scholarship, webinar, hackathon, certification, registration, or any important opportunity, Marakadhey ensures you don't forget it.
 
 ---
+## Privacy Policy
+Marakadhey stores reminder data locally on the user's device using Chrome Storage.
+
+No personal data is collected, transmitted, sold, or shared with third parties.
+
+Google Calendar integration opens a Google Calendar event creation page and does not access the user's Google account.
+
+---
 
 ## Features
 
@@ -84,27 +92,6 @@ Marakadhey is useful for:
 * Event Registrations
 * Personal Deadlines
 
----
-
-## Screenshots
-
-### Add Reminder
-
-Save a webpage and schedule a reminder.
-
-### Inbox
-
-Track pending and completed reminders.
-
-### Notifications
-
-Get notified before deadlines.
-
-### Settings
-
-Customize reminder behavior.
-
----
 
 ## Tech Stack
 
@@ -205,18 +192,7 @@ Marakadhey was built to solve a simple problem:
 ## Author
 
 Pranavesh N
-
-B.Tech Electronics and Communication Engineering
-
-Vellore Institute of Technology, Chennai
-
+Founder of Sikkanam - a budget Travel Planner website 
+Live at : sikkanam.vercel.app
 ---
 
-## License
-
-MIT License
-
-```
-
-Made with ❤️ to help people never miss opportunities.
-```
