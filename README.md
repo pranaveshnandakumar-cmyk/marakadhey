@@ -205,8 +205,18 @@ Marakadhey was built to solve a simple problem:
 ## Author
 
 Pranavesh N
-Founder of Sikkanam - a budget travel planner website 
-check it out at 
-sikkanam.vercel.app
 
+B.Tech Electronics and Communication Engineering
 
+Vellore Institute of Technology, Chennai
+
+---
+
+## License
+
+MIT License
+
+```
+
+Made with ❤️ to help people never miss opportunities.
+```

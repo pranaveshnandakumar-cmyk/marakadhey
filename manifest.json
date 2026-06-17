@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Marakadhey",
+  "version": "1.0",
+  "description": "Marakadhey helps users save opportunities, applications, webinars, scholarships, registrations, and important webpages with reminders so they never miss a deadline.",
+  "minimum_chrome_version": "114",
+  "permissions": [
+    "storage",
+    "alarms",
+    "notifications",
+    "tabs",
+    "activeTab",
+    "scripting"
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "assets/icon.png",
+      "48": "assets/icon.png",
+      "128": "assets/icon.png"
+    }
+  },
+  "background": {
+    "service_worker": "background/service-worker.js",
+    "type": "module"
+  },
+  "icons": {
+    "16": "assets/icon.png",
+    "48": "assets/icon.png",
+    "128": "assets/icon.png"
+  }
+}

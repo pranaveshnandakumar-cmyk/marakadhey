@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Marakadhey</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- Header Section -->
+    <header class="app-header">
+      <h1 class="brand-name">Marakadhey</h1>
+      <p class="tagline">Don't lose opportunities.</p>
+    </header>
+
+    <!-- Tabs Section -->
+    <nav class="app-tabs">
+      <button class="tab-btn active" id="tab-add">Add Reminder</button>
+      <button class="tab-btn" id="tab-inbox">Inbox <span class="badge" id="pending-count">0</span></button>
+      <button class="tab-btn" id="tab-dashboard">Dashboard</button>
+      <button class="tab-btn" id="tab-settings">Settings</button>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="app-content">
+
+      <!-- Add Reminder Tab Content -->
+      <section class="tab-content active" id="content-add">
+        <form id="reminder-form" novalidate>
+          <input type="hidden" id="edit-id" value="">
+          
+          <!-- Validation Message Area -->
+          <div class="validation-message hidden" id="validation-message"></div>
+
+          <!-- Edit Info Banner -->
+          <div class="edit-info hidden" id="edit-info">
+            Editing reminder due on: <span id="edit-info-details"></span>
+          </div>
+
+          <!-- Opportunity Title -->
+          <div class="form-group">
+            <label for="reminder-title">Opportunity Title</label>
+            <input type="text" id="reminder-title" placeholder="Capturing page title...">
+          </div>
+
+          <!-- Readonly URL -->
+          <div class="form-group">
+            <label for="reminder-url">Webpage URL</label>
+            <input type="url" id="reminder-url" readonly placeholder="Capturing page URL...">
+          </div>
+
+          <!-- Detected Deadline Banner -->
+          <div class="detected-deadline-banner hidden" id="detected-deadline-banner">
+            <span id="detected-banner-icon" class="sparkle">✨</span> 
+            <span id="detected-banner-text">Auto-detected deadline: <strong id="detected-date-text"></strong></span>
+            <button type="button" class="btn-apply-detected" id="btn-apply-detected">Use Date</button>
+          </div>
+
+          <!-- Date input group -->
+          <div class="form-group">
+            <label for="reminder-date">Reminder Date</label>
+            <input type="date" id="reminder-date" required>
+          </div>
+
+          <!-- Time input group (Custom 12-Hour Selectors) -->
+          <div class="form-group">
+            <label>Reminder Time</label>
+            <div class="time-select-group">
+              <select id="reminder-hour" title="Select Hour">
+                <option value="1">01</option>
+                <option value="2">02</option>
+                <option value="3">03</option>
+                <option value="4">04</option>
+                <option value="5">05</option>
+                <option value="6">06</option>
+                <option value="7">07</option>
+                <option value="8">08</option>
+                <option value="9" selected>09</option>
+                <option value="10">10</option>
+                <option value="11">11</option>
+                <option value="12">12</option>
+              </select>
+              <span class="separator">:</span>
+              <select id="reminder-minute" title="Select Minute">
+                <!-- Populated dynamically in JavaScript -->
+              </select>
+              <select id="reminder-ampm" title="Select AM or PM">
+                <option value="AM" selected>AM</option>
+                <option value="PM">PM</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Quick Reminder Presets -->
+          <div class="form-group">
+            <label>Quick Presets</label>
+            <div class="presets-row">
+              <button type="button" class="btn-preset" data-preset="today-eve">Today Eve</button>
+              <button type="button" class="btn-preset" data-preset="tomorrow">Tomorrow</button>
+              <button type="button" class="btn-preset" data-preset="3days">3 Days</button>
+              <button type="button" class="btn-preset" data-preset="1week">1 Week</button>
+            </div>
+          </div>
+
+          <!-- Priority Dropdown -->
+          <div class="form-group">
+            <label for="reminder-priority">Priority</label>
+            <select id="reminder-priority">
+              <option value="high">High</option>
+              <option value="medium" selected>Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+
+          <!-- Category Dropdown -->
+          <div class="form-group">
+            <label for="reminder-category">Category</label>
+            <select id="reminder-category">
+              <option value="internship" selected>Internship</option>
+              <option value="job">Job</option>
+              <option value="scholarship">Scholarship</option>
+              <option value="webinar">Webinar</option>
+              <option value="hackathon">Hackathon</option>
+              <option value="certification">Certification</option>
+              <option value="personal">Personal</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <!-- Send reminder to my phone (Google Calendar) -->
+          <div class="form-group checkbox-group">
+            <label for="reminder-gcal" class="checkbox-label">
+              <input type="checkbox" id="reminder-gcal">
+              Send reminder to my phone (Google Calendar)
+            </label>
+            <p class="checkbox-help-text">Get reminders on your phone through Google Calendar notifications.</p>
+          </div>
+
+          <!-- Notes Textarea -->
+          <div class="form-group">
+            <label for="reminder-notes">Optional Notes</label>
+            <textarea id="reminder-notes" rows="3" placeholder="Add eligibility, deadlines, or referral context..."></textarea>
+          </div>
+
+          <!-- Save Button -->
+          <div class="button-row">
+            <button type="submit" class="btn btn-primary" id="btn-save">Save Reminder</button>
+            <button type="button" class="btn btn-secondary hidden" id="btn-cancel-edit">Cancel</button>
+          </div>
+        </form>
+
+        <!-- TODO: Auto deadline detection from webpage text -->
+        <!-- TODO: Email reminders -->
+        <!-- TODO: Telegram reminders -->
+        <!-- TODO: Google Calendar integration -->
+        <!-- TODO: Mobile companion app -->
+      </section>
+
+      <!-- Inbox Tab Content -->
+      <section class="tab-content" id="content-inbox">
+        
+        <!-- Search & Filters Container -->
+        <div class="inbox-controls">
+          <div class="search-box">
+            <input type="text" id="search-input" placeholder="Search by title...">
+            <button class="clear-btn hidden" id="search-clear">&times;</button>
+          </div>
+
+          <div class="filters-row">
+            <!-- Filter buttons -->
+            <div class="filter-pills" id="status-filters">
+              <button class="pill active" data-filter="all">All</button>
+              <button class="pill" data-filter="pending">Pending</button>
+              <button class="pill" data-filter="completed">Completed</button>
+            </div>
+            
+            <!-- Sort dropdown -->
+            <div class="sort-select-wrapper">
+              <select id="sort-select" class="sort-select">
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="duesoon">Due Soon</option>
+                <option value="highprio">High Priority</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Due Soon Section -->
+        <div class="due-soon-section hidden" id="due-soon-section">
+          <div class="due-soon-header">⚠️ Due in 24 Hours</div>
+          <div class="due-soon-list" id="due-soon-container">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+        <!-- Scrollable Reminder List Container -->
+        <div class="reminders-list" id="reminders-container">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <!-- Empty State Container -->
+        <div class="empty-state hidden" id="empty-state">
+          <p class="empty-title">Inbox is clear</p>
+          <p class="empty-subtitle">Save a webpage to remind you later.</p>
+        </div>
+
+        <!-- TODO: Cloud sync -->
+        <!-- TODO: Analytics dashboard -->
+        <!-- TODO: Auto cleanup of completed reminders -->
+      </section>
+
+      <!-- Dashboard Tab Content -->
+      <section class="tab-content" id="content-dashboard">
+        <div class="dashboard-container">
+          
+          <!-- Summary Cards Grid -->
+          <div class="dashboard-stats-grid">
+            <div class="db-stat-card total">
+              <span class="db-stat-num" id="db-total-count">0</span>
+              <span class="db-stat-label">Total</span>
+            </div>
+            <div class="db-stat-card pending">
+              <span class="db-stat-num" id="db-pending-count">0</span>
+              <span class="db-stat-label">Pending</span>
+            </div>
+            <div class="db-stat-card completed">
+              <span class="db-stat-num" id="db-completed-count">0</span>
+              <span class="db-stat-label">Completed</span>
+            </div>
+          </div>
+
+          <!-- Next Deadline Card -->
+          <div class="db-metric-card next-deadline-card" id="db-next-deadline-card">
+            <span class="db-section-title">⏰ Next Deadline</span>
+            <div class="next-deadline-content">
+              <div class="next-deadline-title" id="next-deadline-title">No upcoming deadlines</div>
+              <div class="next-deadline-date" id="next-deadline-date">-</div>
+            </div>
+          </div>
+
+          <!-- Completion Rate Card -->
+          <div class="db-metric-card progress-card">
+            <div class="progress-info">
+              <span class="progress-title">Completion Rate</span>
+              <span class="progress-pct" id="db-completion-pct">0%</span>
+            </div>
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" id="db-progress-fill" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <!-- Urgency Breakdown Card -->
+          <div class="db-metric-card">
+            <h4 class="db-section-title">Opportunity Urgency</h4>
+            <div class="chart-bar-group">
+              <div class="chart-row">
+                <span class="chart-row-label">Overdue</span>
+                <div class="chart-bar-container">
+                  <div class="chart-bar overdue-bar" id="bar-overdue" style="width: 0%"></div>
+                </div>
+                <span class="chart-row-val" id="val-overdue">0</span>
+              </div>
+              <div class="chart-row">
+                <span class="chart-row-label">Due Today</span>
+                <div class="chart-bar-container">
+                  <div class="chart-bar today-bar" id="bar-today" style="width: 0%"></div>
+                </div>
+                <span class="chart-row-val" id="val-today">0</span>
+              </div>
+              <div class="chart-row">
+                <span class="chart-row-label">Upcoming</span>
+                <div class="chart-bar-container">
+                  <div class="chart-bar upcoming-bar" id="bar-upcoming" style="width: 0%"></div>
+                </div>
+                <span class="chart-row-val" id="val-upcoming">0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Priority Distribution Card -->
+          <div class="db-metric-card">
+            <h4 class="db-section-title">Priority Distribution</h4>
+            <div class="chart-bar-group">
+              <div class="chart-row">
+                <span class="chart-row-label">High Priority</span>
+                <div class="chart-bar-container">
+                  <div class="chart-bar high-bar" id="bar-high" style="width: 0%"></div>
+                </div>
+                <span class="chart-row-val" id="val-high">0</span>
+              </div>
+              <div class="chart-row">
+                <span class="chart-row-label">Medium Priority</span>
+                <div class="chart-bar-container">
+                  <div class="chart-bar medium-bar" id="bar-medium" style="width: 0%"></div>
+                </div>
+                <span class="chart-row-val" id="val-medium">0</span>
+              </div>
+              <div class="chart-row">
+                <span class="chart-row-label">Low Priority</span>
+                <div class="chart-bar-container">
+                  <div class="chart-bar low-bar" id="bar-low" style="width: 0%"></div>
+                </div>
+                <span class="chart-row-val" id="val-low">0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Category Distribution Card -->
+          <div class="db-metric-card">
+            <h4 class="db-section-title">Category Distribution</h4>
+            <div class="chart-bar-group" id="db-category-container">
+              <!-- Renders dynamically -->
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Settings Tab Content -->
+      <section class="tab-content" id="content-settings">
+        <div class="settings-container">
+          <div class="settings-item">
+            <div class="setting-control">
+              <input type="checkbox" id="setting-auto-complete">
+              <label for="setting-auto-complete">Mark reminder completed after opening</label>
+            </div>
+            <p class="setting-desc">Automatically mark reminders as completed when clicking "Open Link" from either the Inbox or notification.</p>
+          </div>
+
+          <div class="settings-item">
+            <div class="setting-control">
+              <input type="checkbox" id="setting-hide-completed">
+              <label for="setting-hide-completed">Hide completed reminders from Inbox</label>
+            </div>
+            <p class="setting-desc">Hide completed reminders from the Inbox list while keeping them stored.</p>
+          </div>
+
+          <div class="settings-item">
+            <div class="setting-control">
+              <input type="checkbox" id="setting-auto-delete-completed">
+              <label for="setting-auto-delete-completed">Auto-delete completed reminders older than 90 days</label>
+            </div>
+            <p class="setting-desc">Keep your workspace clean. Automatically delete completed reminders 90 days after they are completed.</p>
+          </div>
+
+          <p class="settings-footer-text">Completed reminders remain available under the Completed filter.</p>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
