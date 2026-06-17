@@ -13,7 +13,7 @@ export const MarakadheyNotifications = {
     
     const options = {
       type: "basic",
-      iconUrl: "/assets/icon.png", // Absolute path to updated icon asset
+      iconUrl: "/assets/icon.png", // Absolute path to updated icon asset from extension root
       title: "Marakadhey Reminder",
       message: `${reminder.title} is due at ${formatTime12Hour(reminder.reminderTime)}.`,
       contextMessage: reminder.note ? reminder.note.substring(0, 60) : "Don't lose opportunities.",
@@ -25,13 +25,17 @@ export const MarakadheyNotifications = {
       requireInteraction: true // Stays visible until dismissed by user
     };
 
-    chrome.notifications.create(notificationId, options, (id) => {
-      if (chrome.runtime.lastError) {
-        console.error("Error creating notification:", chrome.runtime.lastError.message);
-      } else {
-        console.log(`Notification shown successfully for ID: ${id}`);
-      }
-    });
+    try {
+      chrome.notifications.create(notificationId, options, (id) => {
+        if (chrome.runtime.lastError) {
+          console.error("Error creating notification inside callback:", chrome.runtime.lastError.message);
+        } else {
+          console.log(`Notification shown successfully for ID: ${id}`);
+        }
+      });
+    } catch (err) {
+      console.error("Synchronous error creating notification:", err);
+    }
   },
 
   /**

@@ -101,7 +101,8 @@ chrome.notifications.onButtonClicked.addListener(async (notificationId, buttonIn
 
 // 3. Notification Body Click Handler
 chrome.notifications.onClicked.addListener(async (notificationId) => {
-  await openReminderLink(notificationId);
+  // Only clear/dismiss the notification from view.
+  // The website URL should only be opened when the user explicitly clicks the "Open Link" action button.
   await MarakadheyNotifications.clear(notificationId);
 });
 
@@ -135,7 +136,3 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   chrome.alarms.create("auto-delete-completed-alarm", { periodInMinutes: 24 * 60 });
   await MarakadheyStorage.cleanCompletedReminders();
 });
-
-// TODO: Google Calendar integration placeholder
-// TODO: Cloud Sync placeholder
-// TODO: Analytics dashboard placeholder

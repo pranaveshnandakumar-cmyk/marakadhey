@@ -137,6 +137,7 @@ export const MarakadheyStorage = {
 
     // If completed, clear any existing alarm
     if (reminder.completed) {
+      console.log(`Clearing alarm for completed reminder: ${reminder.title}`);
       await MarakadheyStorage.clearAlarm(reminder.id);
       return;
     }
@@ -145,9 +146,10 @@ export const MarakadheyStorage = {
     const now = Date.now();
 
     if (alarmTime > now) {
+      console.log(`Scheduling alarm for: "${reminder.title}" at ${new Date(alarmTime).toString()}`);
       chrome.alarms.create(alarmName, { when: alarmTime });
     } else {
-      // If the due date is in the past, clear any existing alarm
+      console.log(`Skipping alarm for: "${reminder.title}" (due time is in the past)`);
       await MarakadheyStorage.clearAlarm(reminder.id);
     }
   },
@@ -159,13 +161,18 @@ export const MarakadheyStorage = {
   syncAllAlarms: async () => {
     const reminders = await MarakadheyStorage.getAll();
     const now = Date.now();
+    console.log(`Syncing all alarms. Total reminders: ${reminders.length}`);
 
     for (const reminder of reminders) {
       if (!reminder.completed) {
         const alarmTime = parseLocalDateTime(reminder.reminderDate, reminder.reminderTime).getTime();
         const alarmName = getAlarmName(reminder.id);
         if (alarmTime > now) {
+          console.log(`Re-scheduling alarm for: "${reminder.title}" at ${new Date(alarmTime).toString()}`);
           chrome.alarms.create(alarmName, { when: alarmTime });
+        } else {
+          console.log(`Clearing past alarm for: "${reminder.title}"`);
+          await MarakadheyStorage.clearAlarm(reminder.id);
         }
       } else {
         await MarakadheyStorage.clearAlarm(reminder.id);

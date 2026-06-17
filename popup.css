@@ -625,6 +625,12 @@ textarea {
   border-color: #93C5FD;
 }
 
+.card-btn.btn-gcal:hover {
+  background-color: #FEF3C7;
+  color: #D97706;
+  border-color: #FCD34D;
+}
+
 .card-btn.btn-complete:hover {
   background-color: var(--status-upcoming-bg);
   color: var(--status-upcoming-text);

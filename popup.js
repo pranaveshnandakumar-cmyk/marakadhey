@@ -315,6 +315,15 @@ async function fetchActiveTabInfo() {
                 const activeTab = tabs[0];
                 // Populate fields (must be readonly in form)
                 if (activeTab.url && activeTab.url.startsWith("http")) {
+                    // Ignore Google Calendar page URLs to prevent capturing them as the source webpage
+                    const isGCal = activeTab.url.includes("calendar.google.com") || activeTab.url.includes("google.com/calendar");
+                    if (isGCal) {
+                        console.log("Ignoring Google Calendar URL capture.");
+                        titleInput.value = "";
+                        urlInput.value = "";
+                        return;
+                    }
+
                     titleInput.value = activeTab.title || "";
                     urlInput.value = activeTab.url || "";
                     
@@ -683,7 +692,7 @@ export async function saveReminder(e) {
             lastOpenedAt = existing.lastOpenedAt;
             completed = existing.completed;
             completedAt = existing.completedAt || null;
-            category = existing.category || category;
+            category = categorySelect ? categorySelect.value : (existing.category || "other");
         }
     }
 
@@ -867,17 +876,23 @@ export function renderInbox() {
 
       <div class="card-actions">
         <button class="card-btn btn-open">Open Link</button>
+        <button class="card-btn btn-gcal">Add to Calendar</button>
         <button class="card-btn btn-edit">Edit</button>
         <button class="card-btn btn-delete">Delete</button>
         <button class="card-btn btn-complete">
           ${reminder.completed ? "Mark Pending" : "Mark Complete"}
         </button>
-        <!-- TODO: Open existing reminder in Google Calendar -->
       </div>
     `;
 
         // Event Bindings
         card.querySelector(".btn-open").addEventListener("click", () => openReminder(reminder.id));
+        card.querySelector(".btn-gcal").addEventListener("click", () => {
+            const gcalUrl = generateGoogleCalendarLink(reminder);
+            if (gcalUrl) {
+                chrome.tabs.create({ url: gcalUrl });
+            }
+        });
         card.querySelector(".btn-edit").addEventListener("click", () => editReminder(reminder.id));
         card.querySelector(".btn-delete").addEventListener("click", () => deleteReminder(reminder.id, card));
         card.querySelector(".btn-complete").addEventListener("click", () => toggleComplete(reminder.id));
