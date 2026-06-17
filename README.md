@@ -154,7 +154,7 @@ The extension is now installed locally.
 
 ## Roadmap
 
-### Version 1.2 (Completed)
+### Version 2.0 (Completed)
 * **Status Controls**: Hide Completed Reminders and Auto-Complete opening workflow.
 * **Google Calendar Quick Sync**: Optional manual "Add to Calendar" card button with auto-truncating details.
 * **Auto-Deadline Detection**: DOM scanner to auto-detect page deadlines.
@@ -180,16 +180,4 @@ They are missed because we forget them.
 Marakadhey was built to solve a simple problem:
 
 > Save now. Remember later.
-
----
-
-## Author
-
-Pranavesh N
-
-B.Tech Electronics and Communication Engineering
-
-Vellore Institute of Technology, Chennai
-
----
 
