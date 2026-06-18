@@ -58,6 +58,30 @@ export function generateGoogleCalendarLink(reminder) {
     details: description
   });
 
+  if (reminder.recurrence && reminder.recurrence !== "none") {
+    let rrule = "";
+    switch (reminder.recurrence) {
+      case "daily":
+        rrule = "RRULE:FREQ=DAILY";
+        break;
+      case "weekly":
+        rrule = "RRULE:FREQ=WEEKLY";
+        break;
+      case "monthly":
+        rrule = "RRULE:FREQ=MONTHLY";
+        break;
+      case "quarterly":
+        rrule = "RRULE:FREQ=MONTHLY;INTERVAL=3";
+        break;
+      case "yearly":
+        rrule = "RRULE:FREQ=YEARLY";
+        break;
+    }
+    if (rrule) {
+      params.set("recur", rrule);
+    }
+  }
+
   return `${baseUrl}?${params.toString()}`;
 }
 

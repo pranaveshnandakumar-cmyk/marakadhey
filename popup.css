@@ -1039,6 +1039,19 @@ textarea {
 .category-badge.personal { background-color: #EFF6FF; color: #2563EB; }
 .category-badge.other { background-color: #F3F4F6; color: #4B5563; }
 
+/* Recurrence Badge */
+.recurrence-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background-color: #EEF2F6;
+  color: #312E81;
+  border: 1px solid #C7D2FE;
+}
+
 /* Due Soon Container */
 .due-soon-section {
   background-color: #FEF2F2;

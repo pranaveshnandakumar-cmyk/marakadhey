@@ -1,7 +1,7 @@
 // Marakadhey Popup Controller - ES Module
 // Handles DOM interactions, form validations, filters, and storage triggers.
 
-import { MarakadheyStorage, formatTime12Hour, parseLocalDateTime } from "../storage/storage.js";
+import { MarakadheyStorage, formatTime12Hour, parseLocalDateTime, getNextOccurrence } from "../storage/storage.js";
 import { generateGoogleCalendarLink } from "../utils/calendar.js";
 
 // State Management
@@ -568,6 +568,8 @@ function resetForm() {
     notesInput.value = "";
     prioritySelect.value = "medium";
     if (categorySelect) categorySelect.value = "internship";
+    const recurrenceSelect = document.getElementById("reminder-recurrence");
+    if (recurrenceSelect) recurrenceSelect.value = "none";
     if (gcalCheckbox) gcalCheckbox.checked = false;
     setDefaultDateTime();
     hideValidationError();
@@ -638,6 +640,8 @@ export async function saveReminder(e) {
 
     const priority = prioritySelect.value;
     const note = notesInput.value.trim();
+    const recurrenceSelect = document.getElementById("reminder-recurrence");
+    const recurrence = recurrenceSelect ? recurrenceSelect.value : "none";
 
     if (!title) {
         showValidationError("Opportunity Title is required. (Note: Internal chrome:// pages cannot be saved).");
@@ -684,6 +688,7 @@ export async function saveReminder(e) {
 
     let completedAt = null;
     let category = categorySelect ? categorySelect.value : "other";
+    let lastCompletedAt = null;
 
     if (isEdit) {
         const existing = allReminders.find(r => r.id === id);
@@ -693,6 +698,7 @@ export async function saveReminder(e) {
             completed = existing.completed;
             completedAt = existing.completedAt || null;
             category = categorySelect ? categorySelect.value : (existing.category || "other");
+            lastCompletedAt = existing.lastCompletedAt || null;
         }
     }
 
@@ -704,6 +710,8 @@ export async function saveReminder(e) {
         reminderTime,
         priority,
         category,
+        recurrence,
+        lastCompletedAt,
         note,
         completed,
         createdAt,
@@ -855,6 +863,7 @@ export function renderInbox() {
         const dueInfo = calculateDueStatus(reminder);
         const displayDateTime = formatCardDate(reminder.reminderDate, reminder.reminderTime);
         const categoryText = reminder.category ? reminder.category.charAt(0).toUpperCase() + reminder.category.slice(1) : "Other";
+        const displayRecurrence = reminder.recurrence && reminder.recurrence !== "none" ? reminder.recurrence.charAt(0).toUpperCase() + reminder.recurrence.slice(1) : "";
 
         card.innerHTML = `
       <div class="card-header">
@@ -865,6 +874,7 @@ export function renderInbox() {
         <span class="status-badge ${dueInfo.class}">${dueInfo.text}</span>
         <span class="prio-badge ${reminder.priority}">${reminder.priority}</span>
         <span class="category-badge ${reminder.category || 'other'}">${categoryText}</span>
+        ${reminder.recurrence && reminder.recurrence !== 'none' ? `<span class="recurrence-badge">🔁 ${escapeHTML(displayRecurrence)} (Next: ${displayDateTime})</span>` : ""}
       </div>
 
       <div class="card-details">
@@ -954,6 +964,10 @@ export function editReminder(id) {
     if (categorySelect) {
         categorySelect.value = reminder.category || "other";
     }
+    const recurrenceSelect = document.getElementById("reminder-recurrence");
+    if (recurrenceSelect) {
+        recurrenceSelect.value = reminder.recurrence || "none";
+    }
     notesInput.value = reminder.note || "";
     if (gcalCheckbox) gcalCheckbox.checked = false;
 
@@ -1022,8 +1036,21 @@ export async function openReminder(id) {
     try {
         const settings = await MarakadheyStorage.getSettings();
         if (settings.autoComplete) {
-            reminder.completed = true;
-            reminder.completedAt = new Date().toISOString();
+            if (reminder.recurrence && reminder.recurrence !== 'none') {
+                const next = getNextOccurrence(reminder.reminderDate, reminder.reminderTime, reminder.recurrence);
+                if (next) {
+                    reminder.reminderDate = next.reminderDate;
+                    reminder.reminderTime = next.reminderTime;
+                    reminder.completed = false;
+                    reminder.lastCompletedAt = new Date().toISOString();
+                } else {
+                    reminder.completed = true;
+                    reminder.completedAt = new Date().toISOString();
+                }
+            } else {
+                reminder.completed = true;
+                reminder.completedAt = new Date().toISOString();
+            }
         } else {
             reminder.lastOpenedAt = new Date().toISOString();
         }
@@ -1045,11 +1072,24 @@ export async function toggleComplete(id) {
     if (!reminder) return;
 
     try {
-        reminder.completed = !reminder.completed;
-        if (reminder.completed) {
-            reminder.completedAt = new Date().toISOString();
+        if (reminder.recurrence && reminder.recurrence !== 'none') {
+            const next = getNextOccurrence(reminder.reminderDate, reminder.reminderTime, reminder.recurrence);
+            if (next) {
+                reminder.reminderDate = next.reminderDate;
+                reminder.reminderTime = next.reminderTime;
+                reminder.completed = false;
+                reminder.lastCompletedAt = new Date().toISOString();
+            } else {
+                reminder.completed = true;
+                reminder.completedAt = new Date().toISOString();
+            }
         } else {
-            reminder.completedAt = null;
+            reminder.completed = !reminder.completed;
+            if (reminder.completed) {
+                reminder.completedAt = new Date().toISOString();
+            } else {
+                reminder.completedAt = null;
+            }
         }
         await MarakadheyStorage.save(reminder);
         await loadReminders();

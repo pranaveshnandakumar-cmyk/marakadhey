@@ -1,21 +1,48 @@
 // Marakadhey Notifications Module - ES Module
 // Interacts with the chrome.notifications API to display alerts.
 
-import { formatTime12Hour } from "../storage/storage.js";
+import { formatTime12Hour, parseLocalDateTime } from "../storage/storage.js";
+
+function formatNotificationDate(dateStr, timeStr) {
+  const dt = parseLocalDateTime(dateStr, timeStr);
+  if (isNaN(dt.getTime())) return `${dateStr} at ${formatTime12Hour(timeStr)}`;
+  const dateFormatted = dt.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric"
+  });
+  return `${dateFormatted} at ${formatTime12Hour(timeStr)}`;
+}
 
 export const MarakadheyNotifications = {
   /**
    * Displays a system notification for the given reminder.
    * @param {Object} reminder The reminder object.
+   * @param {boolean} isMissed True if this notification is for a missed recurring reminder.
    */
-  show: (reminder) => {
+  show: (reminder, isMissed = false) => {
     const notificationId = reminder.id;
+    const isRecurring = reminder.recurrence && reminder.recurrence !== "none";
+
+    let title = "Marakadhey Reminder";
+    let message = `${reminder.title} is due at ${formatTime12Hour(reminder.reminderTime)}.`;
+
+    if (isRecurring) {
+      const displayRecurrence = reminder.recurrence.charAt(0).toUpperCase() + reminder.recurrence.slice(1);
+      if (isMissed) {
+        title = `🔁 ${displayRecurrence} Reminder (Missed)`;
+        const nextDue = formatNotificationDate(reminder.reminderDate, reminder.reminderTime);
+        message = `You missed the previous occurrence of "${reminder.title}". Next occurrence scheduled for: ${nextDue}.`;
+      } else {
+        title = `🔁 ${displayRecurrence} Reminder`;
+      }
+    }
     
     const options = {
       type: "basic",
       iconUrl: "/assets/icon.png", // Absolute path to updated icon asset from extension root
-      title: "Marakadhey Reminder",
-      message: `${reminder.title} is due at ${formatTime12Hour(reminder.reminderTime)}.`,
+      title: title,
+      message: message,
       contextMessage: reminder.note ? reminder.note.substring(0, 60) : "Don't lose opportunities.",
       buttons: [
         { title: "Open Link" },

@@ -129,6 +129,22 @@
             </select>
           </div>
 
+          <!-- Recurrence Dropdown -->
+          <div class="form-group">
+            <label for="reminder-recurrence">Recurrence</label>
+            <select id="reminder-recurrence">
+              <option value="none" selected>Never</option>
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+              <option value="quarterly">Quarterly</option>
+              <option value="yearly">Yearly</option>
+            </select>
+            <p class="checkbox-help-text" id="recurrence-help-text" style="margin-left: 0; font-size: 0.72rem;">
+              Next occurrence will automatically be generated after completion.
+            </p>
+          </div>
+
           <!-- Send reminder to my phone (Google Calendar) -->
           <div class="form-group checkbox-group">
             <label for="reminder-gcal" class="checkbox-label">

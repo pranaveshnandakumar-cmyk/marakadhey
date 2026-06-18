@@ -51,6 +51,83 @@ export function parseLocalDateTime(dateStr, timeStr) {
   return new Date(year, month, day, hours, minutes);
 }
 
+/**
+ * Shifts a date by a given number of months, handling month-end overflow correctly.
+ * @param {Date} date The original Date object.
+ * @param {number} months The number of months to add.
+ * @param {number} [originalDay] The original start day of the month.
+ * @returns {Date} The shifted Date object.
+ */
+export function addMonths(date, months, originalDay) {
+  const targetMonth = date.getMonth() + months;
+  const dayToUse = originalDay !== undefined ? originalDay : date.getDate();
+  
+  // Set date to 1st of target month first to avoid overflow
+  date.setDate(1);
+  date.setMonth(targetMonth);
+  
+  // Find last day of target month
+  const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  date.setDate(Math.min(dayToUse, lastDay));
+  return date;
+}
+
+/**
+ * Calculates the next occurrence of a recurring reminder that is in the future.
+ * @param {string} dateStr YYYY-MM-DD format
+ * @param {string} timeStr HH:MM format
+ * @param {string} recurrence none|daily|weekly|monthly|quarterly|yearly
+ * @returns {Object|null} An object with { reminderDate, reminderTime } or null if not recurring.
+ */
+export function getNextOccurrence(dateStr, timeStr, recurrence) {
+  if (!recurrence || recurrence === "none") return null;
+
+  const original = parseLocalDateTime(dateStr, timeStr);
+  const originalDay = original.getDate();
+
+  let current = parseLocalDateTime(dateStr, timeStr);
+  if (isNaN(current.getTime())) {
+    current = new Date();
+  }
+
+  const now = new Date();
+  let iterations = 0;
+
+  while (current <= now && iterations < 1000) {
+    iterations++;
+    switch (recurrence) {
+      case "daily":
+        current.setDate(current.getDate() + 1);
+        break;
+      case "weekly":
+        current.setDate(current.getDate() + 7);
+        break;
+      case "monthly":
+        current = addMonths(current, 1, originalDay);
+        break;
+      case "quarterly":
+        current = addMonths(current, 3, originalDay);
+        break;
+      case "yearly":
+        current = addMonths(current, 12, originalDay);
+        break;
+      default:
+        return null;
+    }
+  }
+
+  const year = current.getFullYear();
+  const month = String(current.getMonth() + 1).padStart(2, "0");
+  const day = String(current.getDate()).padStart(2, "0");
+  const hours = String(current.getHours()).padStart(2, "0");
+  const minutes = String(current.getMinutes()).padStart(2, "0");
+
+  return {
+    reminderDate: `${year}-${month}-${day}`,
+    reminderTime: `${hours}:${minutes}`
+  };
+}
+
 export const MarakadheyStorage = {
   /**
    * Retrieves all saved reminders from storage.
@@ -158,9 +235,11 @@ export const MarakadheyStorage = {
    * Loops through all reminders and synchronizes their alarms.
    * Useful on browser startup or extension install to align alarms.
    */
-  syncAllAlarms: async () => {
+  syncAllAlarms: async (onMissedReminder) => {
     const reminders = await MarakadheyStorage.getAll();
     const now = Date.now();
+    let changed = false;
+    const missedReminders = [];
     console.log(`Syncing all alarms. Total reminders: ${reminders.length}`);
 
     for (const reminder of reminders) {
@@ -171,11 +250,53 @@ export const MarakadheyStorage = {
           console.log(`Re-scheduling alarm for: "${reminder.title}" at ${new Date(alarmTime).toString()}`);
           chrome.alarms.create(alarmName, { when: alarmTime });
         } else {
-          console.log(`Clearing past alarm for: "${reminder.title}"`);
-          await MarakadheyStorage.clearAlarm(reminder.id);
+          // Alarm is in the past!
+          if (reminder.recurrence && reminder.recurrence !== "none") {
+            console.log(`Missed recurring reminder: "${reminder.title}". Advancing first...`);
+            
+            // 1. Calculate next occurrence
+            const next = getNextOccurrence(reminder.reminderDate, reminder.reminderTime, reminder.recurrence);
+            if (next) {
+              reminder.reminderDate = next.reminderDate;
+              reminder.reminderTime = next.reminderTime;
+              changed = true;
+              missedReminders.push(reminder);
+
+              // Schedule alarm for new time
+              const newAlarmTime = parseLocalDateTime(reminder.reminderDate, reminder.reminderTime).getTime();
+              if (newAlarmTime > now) {
+                chrome.alarms.create(alarmName, { when: newAlarmTime });
+              } else {
+                await MarakadheyStorage.clearAlarm(reminder.id);
+              }
+            } else {
+              await MarakadheyStorage.clearAlarm(reminder.id);
+            }
+          } else {
+            console.log(`Clearing past alarm for: "${reminder.title}"`);
+            await MarakadheyStorage.clearAlarm(reminder.id);
+          }
         }
       } else {
         await MarakadheyStorage.clearAlarm(reminder.id);
+      }
+    }
+
+    if (changed) {
+      await new Promise((resolve) => {
+        chrome.storage.local.set({ reminders, appVersion: APP_VERSION }, resolve);
+      });
+      console.log("Missed recurring reminders advanced and saved to storage.");
+    }
+
+    // Now that storage is updated, trigger the recovery notifications!
+    if (onMissedReminder && missedReminders.length > 0) {
+      for (const reminder of missedReminders) {
+        try {
+          onMissedReminder(reminder);
+        } catch (e) {
+          console.error("Error in onMissedReminder callback:", e);
+        }
       }
     }
   },

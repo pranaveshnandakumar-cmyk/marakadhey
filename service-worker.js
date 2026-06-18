@@ -1,7 +1,7 @@
 // Marakadhey Background Service Worker - ES Module
 // Manages alarms, notification events, and lifecycle synchronization.
 
-import { MarakadheyStorage, parseLocalDateTime } from "../storage/storage.js";
+import { MarakadheyStorage, parseLocalDateTime, getNextOccurrence } from "../storage/storage.js";
 import { MarakadheyNotifications } from "../notifications/notifications.js";
 
 // Prefix for alarms
@@ -49,8 +49,21 @@ async function openReminderLink(reminderId) {
     if (reminder && reminder.url) {
       const settings = await MarakadheyStorage.getSettings();
       if (settings.autoComplete) {
-        reminder.completed = true;
-        reminder.completedAt = new Date().toISOString();
+        if (reminder.recurrence && reminder.recurrence !== 'none') {
+          const next = getNextOccurrence(reminder.reminderDate, reminder.reminderTime, reminder.recurrence);
+          if (next) {
+            reminder.reminderDate = next.reminderDate;
+            reminder.reminderTime = next.reminderTime;
+            reminder.completed = false;
+            reminder.lastCompletedAt = new Date().toISOString();
+          } else {
+            reminder.completed = true;
+            reminder.completedAt = new Date().toISOString();
+          }
+        } else {
+          reminder.completed = true;
+          reminder.completedAt = new Date().toISOString();
+        }
       } else {
         reminder.lastOpenedAt = new Date().toISOString();
       }
@@ -124,7 +137,9 @@ async function checkTimezoneChange() {
 chrome.runtime.onStartup.addListener(async () => {
   console.log("Browser started. Re-registering all alarms for reliability...");
   await checkTimezoneChange();
-  await MarakadheyStorage.syncAllAlarms();
+  await MarakadheyStorage.syncAllAlarms((reminder) => {
+    MarakadheyNotifications.show(reminder, true);
+  });
   chrome.alarms.create("auto-delete-completed-alarm", { periodInMinutes: 24 * 60 });
   await MarakadheyStorage.cleanCompletedReminders();
 });
@@ -132,7 +147,9 @@ chrome.runtime.onStartup.addListener(async () => {
 chrome.runtime.onInstalled.addListener(async (details) => {
   console.log(`Extension installed/updated (Reason: ${details.reason}). Re-registering all alarms...`);
   await checkTimezoneChange();
-  await MarakadheyStorage.syncAllAlarms();
+  await MarakadheyStorage.syncAllAlarms((reminder) => {
+    MarakadheyNotifications.show(reminder, true);
+  });
   chrome.alarms.create("auto-delete-completed-alarm", { periodInMinutes: 24 * 60 });
   await MarakadheyStorage.cleanCompletedReminders();
 });

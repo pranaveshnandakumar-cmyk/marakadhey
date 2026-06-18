@@ -12,6 +12,8 @@ Whether it's an internship application, coding assignment, scholarship, webinar,
 
 ✅ Set reminder date and time
 
+✅ Set recurrence schedules (Daily, Weekly, Monthly, Quarterly, Yearly)
+
 ✅ Organize reminders by priority
 
 ✅ Smart Inbox for tracking pending and completed reminders

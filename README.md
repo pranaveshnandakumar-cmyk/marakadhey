@@ -29,6 +29,15 @@ Capture the current webpage with one click.
 
 ---
 
+### Recurring Reminders (v2.0)
+Configure reminders to repeat automatically to track repetitive tasks, renewals, and periodic applications.
+* **Recurrence Intervals**: Set schedules for Daily, Weekly, Monthly, Quarterly, or Yearly checks.
+* **Auto-Advance Logic**: Recurring reminders are never marked permanently completed. When completed or opened, they advance dynamically to their next future occurrence and update `lastCompletedAt`.
+* **Month-End Date Boundaries**: Implements robust date shifting (e.g. January 31st advances correctly to February 28th/29th without month overflow).
+* **Browser Restart Recovery**: Detects missed recurring occurrences while the browser was closed, advancing them to their next occurrence and showing a single recovery alert.
+
+---
+
 ### Smart Inbox & UX Hardening
 Manage all saved reminders inside a clean, high-performance workspace.
 * **Smart Filtering & Search**: Find opportunities instantly via real-time search, filter pills (All, Pending, Completed), and status counts.
@@ -155,6 +164,10 @@ The extension is now installed locally.
 ## Roadmap
 
 ### Version 2.0 (Completed)
+* **Recurring Reminders**: Set schedules for Daily, Weekly, Monthly, Quarterly, or Yearly checks.
+* **Month-End Date Protection**: Safely clamp dates (e.g. Jan 31 -> Feb 28/29) to prevent date overflow.
+* **Startup Recovery**: Sync and advance missed recurring alarms on browser startup.
+* **Google Calendar Recurrence Support**: Add recurring parameters to calendar event URLs.
 * **Status Controls**: Hide Completed Reminders and Auto-Complete opening workflow.
 * **Google Calendar Quick Sync**: Optional manual "Add to Calendar" card button with auto-truncating details.
 * **Auto-Deadline Detection**: DOM scanner to auto-detect page deadlines.
@@ -180,4 +193,16 @@ They are missed because we forget them.
 Marakadhey was built to solve a simple problem:
 
 > Save now. Remember later.
+
+---
+
+## Author
+
+Pranavesh N
+
+B.Tech Electronics and Communication Engineering
+
+Vellore Institute of Technology, Chennai
+
+---
 
