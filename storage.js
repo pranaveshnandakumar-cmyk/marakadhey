@@ -1,7 +1,7 @@
 // Marakadhey Storage Module - ES Module
 // Manages reminder records in chrome.storage.local and updates Chrome alarms accordingly.
 
-export const APP_VERSION = "1.0";
+export const APP_VERSION = "2.1";
 
 // Naming helper for alarms
 export function getAlarmName(id) {
@@ -74,18 +74,31 @@ export function addMonths(date, months, originalDay) {
 
 /**
  * Calculates the next occurrence of a recurring reminder that is in the future.
- * @param {string} dateStr YYYY-MM-DD format
- * @param {string} timeStr HH:MM format
- * @param {string} recurrence none|daily|weekly|monthly|quarterly|yearly
+ * Supports legacy signature (dateStr, timeStr, recurrence) and modern signature (reminderObject).
+ * @param {string|Object} reminderOrDateStr The reminder object or date string.
+ * @param {string} [timeStr] HH:MM format.
+ * @param {string} [recurrence] none|daily|weekly|monthly|quarterly|yearly.
  * @returns {Object|null} An object with { reminderDate, reminderTime } or null if not recurring.
  */
-export function getNextOccurrence(dateStr, timeStr, recurrence) {
-  if (!recurrence || recurrence === "none") return null;
+export function getNextOccurrence(reminderOrDateStr, timeStr, recurrence) {
+  let reminder = {};
+  if (typeof reminderOrDateStr === "object" && reminderOrDateStr !== null) {
+    reminder = reminderOrDateStr;
+  } else {
+    reminder = {
+      reminderDate: reminderOrDateStr,
+      reminderTime: timeStr,
+      recurrence: recurrence
+    };
+  }
 
-  const original = parseLocalDateTime(dateStr, timeStr);
+  const { reminderDate, reminderTime, recurrence: recType, recurrenceDays, recurrenceSubtype } = reminder;
+  if (!recType || recType === "none") return null;
+
+  const original = parseLocalDateTime(reminderDate, reminderTime);
   const originalDay = original.getDate();
 
-  let current = parseLocalDateTime(dateStr, timeStr);
+  let current = parseLocalDateTime(reminderDate, reminderTime);
   if (isNaN(current.getTime())) {
     current = new Date();
   }
@@ -93,14 +106,71 @@ export function getNextOccurrence(dateStr, timeStr, recurrence) {
   const now = new Date();
   let iterations = 0;
 
+  // Helpers for custom weekday calculations
+  const getFirstWeekday = (year, month) => {
+    const d = new Date(year, month, 1);
+    while (d.getDay() === 0 || d.getDay() === 6) {
+      d.setDate(d.getDate() + 1);
+    }
+    return d;
+  };
+
+  const getLastWeekday = (year, month) => {
+    const d = new Date(year, month + 1, 0);
+    while (d.getDay() === 0 || d.getDay() === 6) {
+      d.setDate(d.getDate() - 1);
+    }
+    return d;
+  };
+
+  const getFirstWeekend = (year, month) => {
+    const d = new Date(year, month, 1);
+    while (d.getDay() !== 0 && d.getDay() !== 6) {
+      d.setDate(d.getDate() + 1);
+    }
+    return d;
+  };
+
+  const getLastWeekend = (year, month) => {
+    const d = new Date(year, month + 1, 0);
+    while (d.getDay() !== 0 && d.getDay() !== 6) {
+      d.setDate(d.getDate() - 1);
+    }
+    return d;
+  };
+
+  const applyWeekdayShift = (d) => {
+    const shifted = new Date(d);
+    if (shifted.getDay() === 6) { // Saturday -> Friday
+      shifted.setDate(shifted.getDate() - 1);
+    } else if (shifted.getDay() === 0) { // Sunday -> Monday
+      shifted.setDate(shifted.getDate() + 1);
+    }
+    return shifted;
+  };
+
   while (current <= now && iterations < 1000) {
     iterations++;
-    switch (recurrence) {
+    switch (recType) {
       case "daily":
         current.setDate(current.getDate() + 1);
         break;
       case "weekly":
-        current.setDate(current.getDate() + 7);
+        if (recurrenceSubtype === "weekdays") {
+          do {
+            current.setDate(current.getDate() + 1);
+          } while (current.getDay() === 0 || current.getDay() === 6);
+        } else if (recurrenceSubtype === "weekends") {
+          do {
+            current.setDate(current.getDate() + 1);
+          } while (current.getDay() !== 0 && current.getDay() !== 6);
+        } else if (recurrenceSubtype === "custom" && Array.isArray(recurrenceDays) && recurrenceDays.length > 0) {
+          do {
+            current.setDate(current.getDate() + 1);
+          } while (!recurrenceDays.includes(current.getDay()));
+        } else {
+          current.setDate(current.getDate() + 7);
+        }
         break;
       case "monthly":
         current = addMonths(current, 1, originalDay);
@@ -255,7 +325,7 @@ export const MarakadheyStorage = {
             console.log(`Missed recurring reminder: "${reminder.title}". Advancing first...`);
             
             // 1. Calculate next occurrence
-            const next = getNextOccurrence(reminder.reminderDate, reminder.reminderTime, reminder.recurrence);
+            const next = getNextOccurrence(reminder);
             if (next) {
               reminder.reminderDate = next.reminderDate;
               reminder.reminderTime = next.reminderTime;

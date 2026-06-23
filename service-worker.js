@@ -1,8 +1,8 @@
 // Marakadhey Background Service Worker - ES Module
 // Manages alarms, notification events, and lifecycle synchronization.
 
-import { MarakadheyStorage, parseLocalDateTime, getNextOccurrence } from "../storage/storage.js";
-import { MarakadheyNotifications } from "../notifications/notifications.js";
+import { MarakadheyStorage, parseLocalDateTime, getNextOccurrence } from "/storage/storage.js";
+import { MarakadheyNotifications } from "/notifications/notifications.js";
 
 // Prefix for alarms
 const ALARM_PREFIX = "alarm-reminder-";
@@ -50,7 +50,7 @@ async function openReminderLink(reminderId) {
       const settings = await MarakadheyStorage.getSettings();
       if (settings.autoComplete) {
         if (reminder.recurrence && reminder.recurrence !== 'none') {
-          const next = getNextOccurrence(reminder.reminderDate, reminder.reminderTime, reminder.recurrence);
+          const next = getNextOccurrence(reminder);
           if (next) {
             reminder.reminderDate = next.reminderDate;
             reminder.reminderTime = next.reminderTime;

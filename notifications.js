@@ -1,7 +1,7 @@
 // Marakadhey Notifications Module - ES Module
 // Interacts with the chrome.notifications API to display alerts.
 
-import { formatTime12Hour, parseLocalDateTime } from "../storage/storage.js";
+import { formatTime12Hour, parseLocalDateTime } from "/storage/storage.js";
 
 function formatNotificationDate(dateStr, timeStr) {
   const dt = parseLocalDateTime(dateStr, timeStr);

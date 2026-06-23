@@ -145,6 +145,33 @@
             </p>
           </div>
 
+          <!-- Weekly Recurrence Sub-options -->
+          <div class="form-group sub-options hidden" id="weekly-options">
+            <label>Repeat on</label>
+            <div class="recurrence-subtypes">
+              <label class="radio-label">
+                <input type="radio" name="weekly-repeat-type" value="weekdays" checked> Weekdays (Mon-Fri)
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="weekly-repeat-type" value="weekends"> Weekends (Sat-Sun)
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="weekly-repeat-type" value="custom"> Custom Days
+              </label>
+            </div>
+            <div class="days-checkbox-grid hidden" id="weekly-days-grid">
+              <label class="day-checkbox-label"><input type="checkbox" class="weekly-day" value="1"> Mon</label>
+              <label class="day-checkbox-label"><input type="checkbox" class="weekly-day" value="2"> Tue</label>
+              <label class="day-checkbox-label"><input type="checkbox" class="weekly-day" value="3"> Wed</label>
+              <label class="day-checkbox-label"><input type="checkbox" class="weekly-day" value="4"> Thu</label>
+              <label class="day-checkbox-label"><input type="checkbox" class="weekly-day" value="5"> Fri</label>
+              <label class="day-checkbox-label"><input type="checkbox" class="weekly-day" value="6"> Sat</label>
+              <label class="day-checkbox-label"><input type="checkbox" class="weekly-day" value="0"> Sun</label>
+            </div>
+          </div>
+
+
+
           <!-- Send reminder to my phone (Google Calendar) -->
           <div class="form-group checkbox-group">
             <label for="reminder-gcal" class="checkbox-label">

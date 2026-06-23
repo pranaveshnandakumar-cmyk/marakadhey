@@ -62,6 +62,9 @@ const minuteSelect = document.getElementById("reminder-minute");
 const ampmSelect = document.getElementById("reminder-ampm");
 const prioritySelect = document.getElementById("reminder-priority");
 const categorySelect = document.getElementById("reminder-category");
+const recurrenceSelect = document.getElementById("reminder-recurrence");
+const weeklyOptionsDiv = document.getElementById("weekly-options");
+const weeklyDaysGridDiv = document.getElementById("weekly-days-grid");
 const notesInput = document.getElementById("reminder-notes");
 const saveBtn = document.getElementById("btn-save");
 const cancelEditBtn = document.getElementById("btn-cancel-edit");
@@ -202,6 +205,41 @@ function setupEventListeners() {
     sortSelect.addEventListener("change", (e) => {
         sortReminders(e.target.value);
     });
+
+    // Recurrence sub-options dynamic toggle
+    if (recurrenceSelect) {
+        recurrenceSelect.addEventListener("change", toggleRecurrenceSubOptions);
+    }
+    document.querySelectorAll('input[name="weekly-repeat-type"]').forEach(radio => {
+        radio.addEventListener("change", toggleWeeklyDaysGrid);
+    });
+}
+
+// Toggle display of weekly/monthly sub-options
+function toggleRecurrenceSubOptions() {
+    if (!recurrenceSelect) return;
+    const val = recurrenceSelect.value;
+    
+    if (weeklyOptionsDiv) weeklyOptionsDiv.classList.add("hidden");
+
+    if (val === "weekly") {
+        if (weeklyOptionsDiv) {
+            weeklyOptionsDiv.classList.remove("hidden");
+            toggleWeeklyDaysGrid();
+        }
+    }
+}
+
+// Toggle weekly days checklist when "Custom Days" is active
+function toggleWeeklyDaysGrid() {
+    const activeRadio = document.querySelector('input[name="weekly-repeat-type"]:checked');
+    if (weeklyDaysGridDiv) {
+        if (activeRadio && activeRadio.value === "custom") {
+            weeklyDaysGridDiv.classList.remove("hidden");
+        } else {
+            weeklyDaysGridDiv.classList.add("hidden");
+        }
+    }
 }
 
 // Applies preset date and times automatically
@@ -292,7 +330,7 @@ async function loadSettings() {
     }
 }
 
-// Prefills date/time to today at 9 AM for convenience
+// Prefills date/time to today at 9 AM for convenience and restricts past dates
 function setDefaultDateTime() {
     const today = new Date();
 
@@ -300,7 +338,9 @@ function setDefaultDateTime() {
     const month = String(today.getMonth() + 1).padStart(2, "0");
     const day = String(today.getDate()).padStart(2, "0");
 
-    dateInput.value = `${year}-${month}-${day}`;
+    const localISO = `${year}-${month}-${day}`;
+    dateInput.value = localISO;
+    dateInput.setAttribute("min", localISO); // Locks user from selecting past dates in UI wrapper
 
     if (hourSelect) hourSelect.value = "9";
     if (minuteSelect) minuteSelect.value = "00";
@@ -568,13 +608,19 @@ function resetForm() {
     notesInput.value = "";
     prioritySelect.value = "medium";
     if (categorySelect) categorySelect.value = "internship";
-    const recurrenceSelect = document.getElementById("reminder-recurrence");
-    if (recurrenceSelect) recurrenceSelect.value = "none";
+    if (recurrenceSelect) {
+        recurrenceSelect.value = "none";
+        toggleRecurrenceSubOptions();
+    }
+    const weekdayRadio = document.querySelector('input[name="weekly-repeat-type"][value="weekdays"]');
+    if (weekdayRadio) weekdayRadio.checked = true;
+    document.querySelectorAll(".weekly-day").forEach(cb => cb.checked = false);
+
     if (gcalCheckbox) gcalCheckbox.checked = false;
     setDefaultDateTime();
     hideValidationError();
     if (editInfoBanner) editInfoBanner.classList.add("hidden");
-    if (detectedDeadlineBanner) detectedDeadlineBanner.classList.add("hidden");
+    if (typeof detectedDeadlineBanner !== "undefined" && detectedDeadlineBanner) detectedDeadlineBanner.classList.add("hidden");
     fetchActiveTabInfo();
 
     saveBtn.textContent = "Save Reminder";
@@ -642,6 +688,28 @@ export async function saveReminder(e) {
     const note = notesInput.value.trim();
     const recurrenceSelect = document.getElementById("reminder-recurrence");
     const recurrence = recurrenceSelect ? recurrenceSelect.value : "none";
+
+    let recurrenceDays = null;
+    let recurrenceSubtype = null;
+
+    if (recurrence === "weekly") {
+        const repeatRadio = document.querySelector('input[name="weekly-repeat-type"]:checked');
+        const subtype = repeatRadio ? repeatRadio.value : "weekdays";
+        recurrenceSubtype = subtype;
+
+        if (subtype === "weekdays") {
+            recurrenceDays = [1, 2, 3, 4, 5];
+        } else if (subtype === "weekends") {
+            recurrenceDays = [6, 0];
+        } else if (subtype === "custom") {
+            const checkedDays = Array.from(document.querySelectorAll(".weekly-day:checked")).map(cb => parseInt(cb.value, 10));
+            if (checkedDays.length === 0) {
+                showValidationError("Please select at least one day for custom weekly recurrence.");
+                return;
+            }
+            recurrenceDays = checkedDays;
+        }
+    }
 
     if (!title) {
         showValidationError("Opportunity Title is required. (Note: Internal chrome:// pages cannot be saved).");
@@ -711,6 +779,8 @@ export async function saveReminder(e) {
         priority,
         category,
         recurrence,
+        recurrenceDays,
+        recurrenceSubtype,
         lastCompletedAt,
         note,
         completed,
@@ -863,7 +933,10 @@ export function renderInbox() {
         const dueInfo = calculateDueStatus(reminder);
         const displayDateTime = formatCardDate(reminder.reminderDate, reminder.reminderTime);
         const categoryText = reminder.category ? reminder.category.charAt(0).toUpperCase() + reminder.category.slice(1) : "Other";
-        const displayRecurrence = reminder.recurrence && reminder.recurrence !== "none" ? reminder.recurrence.charAt(0).toUpperCase() + reminder.recurrence.slice(1) : "";
+        let displayRecurrence = reminder.recurrence && reminder.recurrence !== "none" ? reminder.recurrence.charAt(0).toUpperCase() + reminder.recurrence.slice(1) : "";
+        if (reminder.recurrence === "weekly" && reminder.recurrenceSubtype) {
+            displayRecurrence += ` (${reminder.recurrenceSubtype.charAt(0).toUpperCase() + reminder.recurrenceSubtype.slice(1)})`;
+        }
 
         card.innerHTML = `
       <div class="card-header">
@@ -964,10 +1037,25 @@ export function editReminder(id) {
     if (categorySelect) {
         categorySelect.value = reminder.category || "other";
     }
-    const recurrenceSelect = document.getElementById("reminder-recurrence");
     if (recurrenceSelect) {
         recurrenceSelect.value = reminder.recurrence || "none";
+        toggleRecurrenceSubOptions();
     }
+
+    if (reminder.recurrence === "weekly") {
+        const subtype = reminder.recurrenceSubtype || "weekdays";
+        const radio = document.querySelector(`input[name="weekly-repeat-type"][value="${subtype}"]`);
+        if (radio) {
+            radio.checked = true;
+            toggleWeeklyDaysGrid();
+        }
+        if (subtype === "custom" && reminder.recurrenceDays) {
+            document.querySelectorAll(".weekly-day").forEach(cb => {
+                cb.checked = reminder.recurrenceDays.includes(parseInt(cb.value, 10));
+            });
+        }
+    }
+
     notesInput.value = reminder.note || "";
     if (gcalCheckbox) gcalCheckbox.checked = false;
 
@@ -983,7 +1071,7 @@ export function editReminder(id) {
 
 /**
  * 5. deleteReminder()
- * Deletes a reminder from storage.
+ * Deletes a reminder from storage safely without timer pollution.
  */
 export async function deleteReminder(id, card) {
     const reminder = allReminders.find(r => r.id === id);
@@ -1013,12 +1101,18 @@ export async function deleteReminder(id, card) {
             console.error("Error deleting reminder:", err);
         }
     } else {
+        // Clear any orphaned or lingering timers on this specific card block before assigning a new one
+        if (card.dataset.deleteTimeoutId) {
+            clearTimeout(parseInt(card.dataset.deleteTimeoutId, 10));
+        }
+
         deleteBtn.textContent = "Confirm?";
         deleteBtn.classList.add("confirm-state");
 
         const timeoutId = setTimeout(() => {
             deleteBtn.textContent = "Delete";
             deleteBtn.classList.remove("confirm-state");
+            delete card.dataset.deleteTimeoutId;
         }, 3000);
 
         card.dataset.deleteTimeoutId = timeoutId;

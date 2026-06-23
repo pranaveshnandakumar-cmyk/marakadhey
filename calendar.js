@@ -1,4 +1,4 @@
-import { parseLocalDateTime, formatTime12Hour } from "../storage/storage.js";
+import { parseLocalDateTime, formatTime12Hour } from "/storage/storage.js";
 
 /**
  * Generates a pre-filled Google Calendar event URL for a reminder.
@@ -23,18 +23,18 @@ export function generateGoogleCalendarLink(reminder) {
     cleanNote = cleanNote.substring(0, 500) + "... (Truncated)";
   }
 
-  // Helper to format Date as YYYYMMDDTHHmmSS in local time
-  const formatToGCalString = (date) => {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, "0");
-    const d = String(date.getDate()).padStart(2, "0");
-    const hh = String(date.getHours()).padStart(2, "0");
-    const mm = String(date.getMinutes()).padStart(2, "0");
-    const ss = String(date.getSeconds()).padStart(2, "0");
-    return `${y}${m}${d}T${hh}${mm}${ss}`;
+  // Formats Date as YYYYMMDDTHHmmSSZ in strict absolute UTC time
+  const formatToGCalUTCString = (date) => {
+    const y = date.getUTCFullYear();
+    const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const d = String(date.getUTCDate()).padStart(2, "0");
+    const hh = String(date.getUTCHours()).padStart(2, "0");
+    const mm = String(date.getUTCMinutes()).padStart(2, "0");
+    const ss = String(date.getUTCSeconds()).padStart(2, "0");
+    return `${y}${m}${d}T${hh}${mm}${ss}Z`;
   };
 
-  const datesParam = `${formatToGCalString(startDt)}/${formatToGCalString(endDt)}`;
+  const datesParam = `${formatToGCalUTCString(startDt)}/${formatToGCalUTCString(endDt)}`;
   const capitalizedPriority = reminder.priority.charAt(0).toUpperCase() + reminder.priority.slice(1);
 
   // Event Description layout
@@ -47,34 +47,41 @@ export function generateGoogleCalendarLink(reminder) {
     description += `\n\nNotes:\n${cleanNote}`;
   }
 
-  const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-
   const baseUrl = "https://www.google.com/calendar/render";
   const params = new URLSearchParams({
     action: "TEMPLATE",
     text: cleanTitle,
     dates: datesParam,
-    ctz: userTimezone,
     details: description
   });
 
   if (reminder.recurrence && reminder.recurrence !== "none") {
     let rrule = "";
     switch (reminder.recurrence) {
-      case "daily":
-        rrule = "RRULE:FREQ=DAILY";
+      case "daily": 
+        rrule = "RRULE:FREQ=DAILY"; 
         break;
-      case "weekly":
-        rrule = "RRULE:FREQ=WEEKLY";
+      case "weekly": 
+        if (reminder.recurrenceSubtype === "weekdays") {
+          rrule = "RRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR";
+        } else if (reminder.recurrenceSubtype === "weekends") {
+          rrule = "RRULE:FREQ=WEEKLY;BYDAY=SA,SU";
+        } else if (reminder.recurrenceSubtype === "custom" && Array.isArray(reminder.recurrenceDays) && reminder.recurrenceDays.length > 0) {
+          const dayMap = { 0: "SU", 1: "MO", 2: "TU", 3: "WE", 4: "TH", 5: "FR", 6: "SA" };
+          const days = reminder.recurrenceDays.map(d => dayMap[d]).filter(Boolean).join(",");
+          rrule = `RRULE:FREQ=WEEKLY;BYDAY=${days}`;
+        } else {
+          rrule = "RRULE:FREQ=WEEKLY";
+        }
         break;
-      case "monthly":
+      case "monthly": 
         rrule = "RRULE:FREQ=MONTHLY";
         break;
-      case "quarterly":
-        rrule = "RRULE:FREQ=MONTHLY;INTERVAL=3";
+      case "quarterly": 
+        rrule = "RRULE:FREQ=MONTHLY;INTERVAL=3"; 
         break;
-      case "yearly":
-        rrule = "RRULE:FREQ=YEARLY";
+      case "yearly": 
+        rrule = "RRULE:FREQ=YEARLY"; 
         break;
     }
     if (rrule) {
@@ -84,8 +91,3 @@ export function generateGoogleCalendarLink(reminder) {
 
   return `${baseUrl}?${params.toString()}`;
 }
-
-// TODO: Future Enhancement: Open existing reminder in Google Calendar
-// TODO: Future Enhancement: Telegram Notifications
-// TODO: Future Enhancement: WhatsApp Business Integration
-// TODO: Future Enhancement: Web Push Notifications

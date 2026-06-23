@@ -328,6 +328,70 @@ textarea {
   background-color: #9CA3AF;
 }
 
+/* Sub-options for weekly/monthly recurrence */
+.sub-options {
+  margin-top: -4px;
+  padding: 10px;
+  background-color: #F9FAFB;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  animation: slideDown 0.2s ease;
+}
+
+.recurrence-subtypes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.radio-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-main);
+  text-transform: none;
+  letter-spacing: normal;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.radio-label input[type="radio"] {
+  accent-color: var(--primary);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+.days-checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border-color);
+}
+
+.day-checkbox-label {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-main);
+  text-transform: none;
+  letter-spacing: normal;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.day-checkbox-label input[type="checkbox"] {
+  accent-color: var(--primary);
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+
 .hidden {
   display: none !important;
 }
